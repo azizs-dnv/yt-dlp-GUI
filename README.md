@@ -47,6 +47,6 @@ The application consists of:
 
 ```bash
 git clone https://github.com/azizs10/yt-dlp-GUI.git
-cd yt-downloader
+cd yt-dlp-GUI
 pip install -r requirements.txt
 python main.py
