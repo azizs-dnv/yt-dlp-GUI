@@ -46,7 +46,7 @@ The application consists of:
 4. Run main.py file 
 
 ```bash
-git clone [https://github.com/&lt;your-username&gt;/yt-downloader.git](https://github.com/azizs10/yt-dlp-GUI)
+git clone https://github.com/azizs10/yt-dlp-GUI.git
 cd yt-downloader
 pip install -r requirements.txt
 python main.py
