@@ -49,3 +49,5 @@ git clone [https://github.com/azizs10/yt-dlp-GUI.git](https://github.com/azizs10
 cd yt-dlp-GUI
 pip install -r requirements.txt
 python main.py
+```
+Please give it a star; that would really help me out.
