@@ -25,6 +25,32 @@ def get_video_info(url: str, proxy: str = "") -> Dict[str, Any]:
         return ydl.extract_info(url, download=False)
 
 
+def get_playlist_entries(url: str, proxy: str = "") -> list[str]:
+    if yt_dlp is None:
+        raise RuntimeError("yt-dlp is not installed.")
+
+    opts: Dict[str, Any] = {
+        "quiet": False,
+        "no_warnings": False,
+        "extract_flat": True,
+        "noplaylist": False,
+        "retries": 10,
+        "extractor_retries": 3,
+        "socket_timeout": 30,
+    }
+    if proxy:
+        opts["proxy"] = proxy
+
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+    if info.get("_type") != "playlist":
+        return [url]
+
+    entries = info.get("entries") or []
+    return [entry["url"] for entry in entries if entry and entry.get("url")]
+
+
 def build_download_options(
     out_dir: str,
     quality: str,
@@ -36,7 +62,7 @@ def build_download_options(
     ydl_opts: Dict[str, Any] = {
         "outtmpl": os.path.join(out_dir, "%(title)s.%(ext)s"),
         "progress_hooks": [progress_hook],
-        "noplaylist": not playlist,
+        "noplaylist": True,
         "quiet": False,
         "no_warnings": False,
         "retries": 10,
