@@ -11,7 +11,13 @@ def get_video_info(url: str, proxy: str = "") -> Dict[str, Any]:
     if yt_dlp is None:
         raise RuntimeError("yt-dlp is not installed.")
 
-    opts: Dict[str, Any] = {"quiet": False, "no_warnings": False}
+    opts: Dict[str, Any] = {
+        "quiet": False,
+        "no_warnings": False,
+        "retries": 10,
+        "extractor_retries": 3,
+        "socket_timeout": 30,
+    }
     if proxy:
         opts["proxy"] = proxy
 
@@ -33,6 +39,12 @@ def build_download_options(
         "noplaylist": not playlist,
         "quiet": False,
         "no_warnings": False,
+        "retries": 10,
+        "fragment_retries": 10,
+        "file_access_retries": 5,
+        "extractor_retries": 3,
+        "socket_timeout": 30,
+        "concurrent_fragment_downloads": 1,
     }
 
     if proxy:
@@ -49,11 +61,16 @@ def build_download_options(
         ]
     else:
         if quality == "Best quality":
-            ydl_opts["format"] = "bestvideo+bestaudio/best"
+            ydl_opts["format"] = (
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/"
+                "best[ext=mp4]/best"
+            )
         else:
             height = quality.replace("p", "")
             ydl_opts["format"] = (
-                f"bestvideo[height<={height}]+bestaudio/best[height<={height}]"
+                f"bestvideo[height<={height}][ext=mp4]+"
+                f"bestaudio[ext=m4a]/best[height<={height}][ext=mp4]/"
+                f"best[height<={height}]/best"
             )
         ydl_opts["merge_output_format"] = "mp4"
 
