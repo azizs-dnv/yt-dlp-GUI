@@ -23,6 +23,7 @@ class DownloaderApp(ctk.CTk):
 
         self.msg_queue = queue.Queue()
         self.download_thread = None
+        self.cancel_event = threading.Event()
         self.is_downloading = False
         self.playlist = False
         self.url_queue = []
@@ -285,6 +286,17 @@ class DownloaderApp(ctk.CTk):
         )
         self.download_btn.grid(row=0, column=0, sticky="ew")
 
+        self.cancel_btn = ctk.CTkButton(
+            btn_frame,
+            text="Cancel",
+            height=36,
+            fg_color="#b42318",
+            hover_color="#8f1d14",
+            state="disabled",
+            command=self._cancel_download,
+        )
+        self.cancel_btn.grid(row=1, column=0, pady=(8, 0), sticky="ew")
+
         ctk.CTkButton(
             btn_frame, text="History", width=100, height=46, command=self._show_history
         ).grid(row=0, column=1, padx=(10, 0))
@@ -392,12 +404,23 @@ class DownloaderApp(ctk.CTk):
         os.makedirs(out_dir, exist_ok=True)
 
         self.is_downloading = True
-        self.download_btn.configure(state="disabled", text="Downloading...")
+        self.cancel_event.clear()
+        self.download_btn.configure(state="disabled", text="Installing...")
+        self.cancel_btn.configure(state="normal")
         self.progress_bar.set(0)
         self._set_status(f"Queue: 1/{len(self.url_queue)}")
         self._log(f"Starting queue with {len(self.url_queue)} URL(s)")
 
         self._process_next_in_queue()
+
+    def _cancel_download(self):
+        if not self.is_downloading:
+            return
+
+        self.cancel_event.set()
+        self.cancel_btn.configure(state="disabled")
+        self._set_status("Cancelling...")
+        self._log("Cancellation requested")
 
     def _process_next_in_queue(self):
         if self.current_url_index >= len(self.url_queue):
@@ -416,6 +439,9 @@ class DownloaderApp(ctk.CTk):
         out_dir = self.output_dir.get().strip() or DEFAULT_DOWNLOAD_DIR
 
         def progress_hook(d):
+            if self.cancel_event.is_set():
+                raise yt_dlp.utils.DownloadCancelled()
+
             if d.get("status") == "downloading":
                 total = d.get("total_bytes") or d.get("total_bytes_estimate")
                 downloaded = d.get("downloaded_bytes", 0)
@@ -458,6 +484,8 @@ class DownloaderApp(ctk.CTk):
                     title = info.get("title", "video")
             ok = True
             self.msg_queue.put(("done", title))
+        except yt_dlp.utils.DownloadCancelled:
+            self.msg_queue.put(("cancelled", None))
         except Exception as exc:
             self.msg_queue.put(("error", str(exc)))
 
@@ -507,6 +535,10 @@ class DownloaderApp(ctk.CTk):
                     else:
                         self._set_status("Queue finished with errors")
                         self._finish_all_downloads()
+                elif kind == "cancelled":
+                    self._log("Download cancelled")
+                    self._set_status("Cancelled")
+                    self._finish_all_downloads()
                 elif kind == "update_stats":
                     self._update_stats_label()
         except queue.Empty:
@@ -516,6 +548,7 @@ class DownloaderApp(ctk.CTk):
     def _finish_all_downloads(self):
         self.is_downloading = False
         self.download_btn.configure(state="normal", text="Download")
+        self.cancel_btn.configure(state="disabled")
         self.progress_bar.set(1.0 if self.stats["success"] > 0 else 0)
 
         if self.notify_var.get():
