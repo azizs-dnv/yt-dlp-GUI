@@ -8,7 +8,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
 from config import APP_NAME, APP_VERSION, DEFAULT_DOWNLOAD_DIR
-from downloader import build_download_options, get_video_info, yt_dlp
+from downloader import build_download_options, get_playlist_entries, get_video_info, yt_dlp
 from helpers import open_folder, parse_urls, play_bell
 from storage import load_history, save_history
 
@@ -471,9 +471,29 @@ class DownloaderApp(ctk.CTk):
         ok = False
         title = "unknown"
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                title = info.get("title", "video")
+            download_urls = (
+                get_playlist_entries(url, self.proxy_var.get().strip())
+                if self.playlist
+                else [url]
+            )
+            if not download_urls:
+                raise RuntimeError(
+                    "The playlist could not be read or contains no downloadable videos."
+                )
+
+            for playlist_index, download_url in enumerate(download_urls, 1):
+                if self.cancel_event.is_set():
+                    raise yt_dlp.utils.DownloadCancelled()
+                if self.playlist:
+                    self.msg_queue.put(
+                        (
+                            "status",
+                            f"Playlist video {playlist_index}/{len(download_urls)}",
+                        )
+                    )
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(download_url, download=True)
+                    title = info.get("title", "video")
             ok = True
             self.msg_queue.put(("done", title))
         except yt_dlp.utils.DownloadCancelled:
