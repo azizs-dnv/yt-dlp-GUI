@@ -64,6 +64,7 @@ def build_download_options(
         "progress_hooks": [progress_hook],
         "noplaylist": not playlist,
         "js_runtimes": {"node": {}},
+        "remote_components": ["ejs:github"],
         "quiet": False,
         "no_warnings": False,
         "retries": 10,
@@ -89,14 +90,14 @@ def build_download_options(
     else:
         if quality == "Best quality":
             ydl_opts["format"] = (
-                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/"
+                "bestvideo[ext=mp4]+bestaudio/"
                 "best[ext=mp4]/best"
             )
         else:
             height = quality.replace("p", "")
             ydl_opts["format"] = (
                 f"bestvideo[height<={height}][ext=mp4]+"
-                f"bestaudio[ext=m4a]/best[height<={height}][ext=mp4]/"
+                f"bestaudio/best[height<={height}][ext=mp4]/"
                 f"best[height<={height}]/best"
             )
         ydl_opts["merge_output_format"] = "mp4"
