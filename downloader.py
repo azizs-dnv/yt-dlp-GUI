@@ -1,5 +1,6 @@
 import os
 from typing import Any, Dict
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 try:
     import yt_dlp
@@ -14,6 +15,9 @@ def get_video_info(url: str, proxy: str = "") -> Dict[str, Any]:
     opts: Dict[str, Any] = {
         "quiet": False,
         "no_warnings": False,
+        "js_runtimes": {"node": {}},
+        "remote_components": ["ejs:github"],
+        "extractor_args": {"youtube": {"player_client": ["web_safari"]}},
         "retries": 10,
         "extractor_retries": 3,
         "socket_timeout": 30,
@@ -29,11 +33,30 @@ def get_playlist_entries(url: str, proxy: str = "") -> list[str]:
     if yt_dlp is None:
         raise RuntimeError("yt-dlp is not installed.")
 
+    parsed_url = urlparse(url)
+    playlist_id = parse_qs(parsed_url.query).get("list", [None])[0]
+    if playlist_id:
+        url = urlunparse(
+            (
+                parsed_url.scheme or "https",
+                parsed_url.netloc or "www.youtube.com",
+                "/playlist",
+                "",
+                urlencode({"list": playlist_id}),
+                "",
+            )
+        )
+    else:
+        return [url]
+
     opts: Dict[str, Any] = {
         "quiet": False,
         "no_warnings": False,
         "extract_flat": True,
         "noplaylist": False,
+        "js_runtimes": {"node": {}},
+        "remote_components": ["ejs:github"],
+        "extractor_args": {"youtube": {"player_client": ["web_safari"]}},
         "retries": 10,
         "extractor_retries": 3,
         "socket_timeout": 30,
@@ -45,10 +68,19 @@ def get_playlist_entries(url: str, proxy: str = "") -> list[str]:
         info = ydl.extract_info(url, download=False)
 
     if info.get("_type") != "playlist":
-        return [url]
+        return []
 
     entries = info.get("entries") or []
-    return [entry["url"] for entry in entries if entry and entry.get("url")]
+    playlist_entries = []
+    for entry in entries:
+        if not entry:
+            continue
+        entry_url = entry.get("webpage_url") or entry.get("url")
+        if entry.get("id") and str(entry.get("ie_key", "youtube")).lower() == "youtube":
+            entry_url = f"https://www.youtube.com/watch?v={entry['id']}"
+        if entry_url:
+            playlist_entries.append(entry_url)
+    return playlist_entries
 
 
 def build_download_options(
@@ -62,9 +94,10 @@ def build_download_options(
     ydl_opts: Dict[str, Any] = {
         "outtmpl": os.path.join(out_dir, "%(title)s.%(ext)s"),
         "progress_hooks": [progress_hook],
-        "noplaylist": not playlist,
+        "noplaylist": True,
         "js_runtimes": {"node": {}},
         "remote_components": ["ejs:github"],
+        "extractor_args": {"youtube": {"player_client": ["web_safari"]}},
         "quiet": False,
         "no_warnings": False,
         "retries": 10,
