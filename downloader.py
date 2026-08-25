@@ -62,7 +62,7 @@ def build_download_options(
     ydl_opts: Dict[str, Any] = {
         "outtmpl": os.path.join(out_dir, "%(title)s.%(ext)s"),
         "progress_hooks": [progress_hook],
-        "noplaylist": True,
+        "noplaylist": not playlist,
         "quiet": False,
         "no_warnings": False,
         "retries": 10,
