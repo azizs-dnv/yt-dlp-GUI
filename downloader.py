@@ -63,6 +63,7 @@ def build_download_options(
         "outtmpl": os.path.join(out_dir, "%(title)s.%(ext)s"),
         "progress_hooks": [progress_hook],
         "noplaylist": not playlist,
+        "js_runtimes": {"node": {}},
         "quiet": False,
         "no_warnings": False,
         "retries": 10,
