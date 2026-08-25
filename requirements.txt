@@ -1,2 +1,2 @@
-yt-dlp>=2024.1.1
+yt-dlp[default]>=2026.8.19
 customtkinter>=5.2.2
