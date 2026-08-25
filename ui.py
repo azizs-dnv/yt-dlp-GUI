@@ -18,8 +18,8 @@ class DownloaderApp(ctk.CTk):
         super().__init__()
 
         self.title(f"{APP_NAME} {APP_VERSION}")
-        self.geometry("800x900")
-        self.minsize(680, 620)
+        self.geometry("1200x1350")
+        self.minsize(1020, 930)
 
         self.msg_queue = queue.Queue()
         self.download_thread = None
@@ -301,14 +301,18 @@ class DownloaderApp(ctk.CTk):
             btn_frame, text="History", width=100, height=46, command=self._show_history
         ).grid(row=0, column=1, padx=(10, 0))
 
-        self.progress_bar = ctk.CTkProgressBar(self, height=14)
+        self.progress_bar = ctk.CTkProgressBar(self, height=18)
         self.progress_bar.set(0)
         self.progress_bar.grid(row=10, column=0, padx=20, pady=(5, 5), sticky="ew")
 
         self.status_label = ctk.CTkLabel(
-            self, text="Ready", font=ctk.CTkFont(size=12)
+            self,
+            text="Ready",
+            anchor="w",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color=("gray25", "gray80"),
         )
-        self.status_label.grid(row=11, column=0, padx=20, pady=(0, 5), sticky="w")
+        self.status_label.grid(row=11, column=0, padx=20, pady=(2, 8), sticky="ew")
 
         self.grid_rowconfigure(12, weight=1)
         self.log_box = ctk.CTkTextbox(
@@ -451,7 +455,11 @@ class DownloaderApp(ctk.CTk):
                 pct = d.get("_percent_str", "").strip()
                 eta = d.get("_eta_str", "").strip()
                 self.msg_queue.put(
-                    ("status", f"[{self.current_url_index + 1}/{len(self.url_queue)}] {pct} | {speed} | ETA {eta}")
+                    (
+                        "status",
+                        f"Video {self.current_url_index + 1}/{len(self.url_queue)}  |  "
+                        f"Progress: {pct}  |  Speed: {speed}  |  ETA: {eta}",
+                    )
                 )
             elif d.get("status") == "finished":
                 self.msg_queue.put(("status", "Processing..."))
