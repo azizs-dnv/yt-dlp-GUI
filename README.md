@@ -3,7 +3,6 @@
 A modern desktop application with a modern GUI for downloading video and audio from YouTube and other websites supported by [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
-![License](https://img.shields.io/badge/license-Non--Commercial-red)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
 ## Features
